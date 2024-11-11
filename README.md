@@ -4,6 +4,6 @@
 ### Shift D
 
 ## Demo
-![Demo Video](2024-11-11%18-27-03.gif).
+![Demo Video](2024-11-11%2018-27-03.gif)
 
 ## Penjelasan Aplikasi
