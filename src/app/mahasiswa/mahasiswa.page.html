@@ -1,0 +1,107 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Welcome {{ namaUser }}, This is the Mahasiswa Data Page</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Data Mahasiswa</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <hr>
+  
+
+  <!-- button tambah -->
+  <ion-card>
+    <ion-button (click)="openModalTambah(true)" expand="block">Add Data Mahasiswa</ion-button>
+  </ion-card>
+  <!-- modal tambah -->
+  <ion-modal [isOpen]="modalTambah" (ionModalDidDismiss)="cancel()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button (click)="cancel()"><ion-icon name="close-outline"></ion-icon></ion-button>
+          </ion-buttons>
+          <ion-title>Add Data Mahasiswa</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-input label="Nama Mahasiswa" labelPlacement="floating" required [(ngModel)]="namaMahasiswa"
+            placeholder="Masukkan Nama Mahasiswa" type="text">
+          </ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-input label='Jurusan Mahasiswa' labelPlacement="floating" required [(ngModel)]="jurusan"
+            placeholder="Masukkan Jurusan Mahasiswa" type="text">
+          </ion-input>
+        </ion-item>
+        <ion-row>
+          <ion-col>
+            <ion-button type="button" (click)="tambahMahasiswa()" color="primary" shape="full" expand="block">Add
+              Mahasiswa
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+  <!-- ini untuk modal edit -->
+  <ion-modal [isOpen]="modalEdit" (ionModalDidDismiss)="cancel()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button (click)="cancel()"><ion-icon name="close-outline"></ion-icon></ion-button>
+          </ion-buttons>
+          <ion-title>Edit Data Mahasiswa</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-input label="Nama Mahasiswa" labelPlacement="floating" required [(ngModel)]="namaMahasiswa"
+            placeholder="Masukkan Nama Mahasiswa" type="text">
+          </ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-input label='Jurusan Mahasiswa' labelPlacement="floating" required [(ngModel)]="jurusan"
+            placeholder="Masukkan Jurusan Mahasiswa" type="text">
+          </ion-input>
+        </ion-item>
+        <ion-input required [(ngModel)]="id" type="hidden">
+        </ion-input>
+        <ion-row>
+          <ion-col>
+            <ion-button type="button" (click)="editMahasiswa()" color="primary" shape="full" expand="block">Edit
+              Data Mahasiswa
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <ion-card *ngFor="let item of dataMahasiswa">
+    <ion-item *ngIf="item && item.nama && item.jurusan">
+      <ion-label>
+        {{item.nama}}
+        <p>{{item.jurusan}}</p>
+      </ion-label>
+      <ion-button color="warning" expand="block" (click)="openModalEdit(true,item.id)">
+        Edit
+      </ion-button>
+      <ion-button color="danger" slot="end" (click)="konfirmasiHapus(item.id)">
+        Delete
+      </ion-button>  
+    </ion-item>
+  </ion-card>
+
+  <ion-item (click)="logout()" style="margin-top: 30px;">
+    <ion-icon slot="start" ios="exit-outline" md="exit-sharp"></ion-icon>
+    <ion-label>Logout</ion-label>
+  </ion-item>
+</ion-content>
