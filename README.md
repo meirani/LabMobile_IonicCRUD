@@ -532,5 +532,56 @@ diatas adalah file tampilan untuk mahasiswa, pertama-tama terdapat tulisan heade
 
 8. Guards
 - auth.guard.ts
+```
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthenticationService } from '../services/authentication.service';
+import { inject } from '@angular/core';
+import { filter, map, take } from 'rxjs';
+
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthenticationService);
+  const router = inject(Router);
+
+  return authService.authenticationState.pipe(
+    filter((val) => val !== null),
+    take(1),
+    map((isAuthenticated) => {
+      if (isAuthenticated) {
+        return true;
+      } else {
+        router.navigateByUrl('/login', { replaceUrl: true });
+        return true;
+      }
+    })
+  );
+};
+```
+Di atas adalah kode untuk authGuard, yang merupakan fungsi penjaga rute untuk melindungi halaman yang membutuhkan autentikasi. Fungsi ini memeriksa status autentikasi pengguna. Pertama, filter memastikan nilai autentikasi sudah tidak null, lalu take(1) mengambil satu nilai saja. Jika pengguna sudah terautentikasi maka akses ke halaman diizinkan. Jika tidak, pengguna diarahkan ke halaman login (/login)
+
 - auto-login.guard.ts
+```
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthenticationService } from '../services/authentication.service';
+import { filter, map, take } from 'rxjs';
+
+export const autoLoginGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthenticationService);
+  const router = inject(Router);
+
+  return authService.authenticationState.pipe(
+    filter((val) => val !== null),
+    take(1),
+    map((isAuthenticated) => {
+      if (isAuthenticated) {
+        router.navigateByUrl('/mahasiswa', { replaceUrl: true });
+        return true;
+      } else {
+        return true;
+      }
+    }
+    ))
+};
+```
+Di atas ini adalah kode untuk `autoLoginGuard`, yaitu penjaga rute yang berfungsi untuk mencegah pengguna yang sudah login mengakses halaman login lagi. Fungsi ini memeriksa apakah pengguna sudah terautentikasi. Pertama, filter memastikan nilai autentikasi tidak null, lalu take(1) mengambil satu nilai saja. Jika pengguna sudah terautentikasi mereka langsung diarahkan ke halaman mahasiswa dengan opsi replaceUrl agar tidak dapat kembali ke halaman login. Jika pengguna belum terautentikasi, mereka diizinkan untuk melanjutkan ke halaman login.
 
