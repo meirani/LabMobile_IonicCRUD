@@ -172,12 +172,364 @@ diatas ini adalah fungsi-fungsi pada file authentication service. terdapat `load
 untuk file service mahasiswa ini berisi fungsi `apiURL()` yang menhbungkan ke API dengan alamat 'http://mahasiswa.test:8080/', lalu terdapat fungsi-funsi untuk create, read, update, delete atau CRUD seperti tambah, edit, tampil, hapus, lihat.
 
 5. Fungsi untuk CRUD mahasiswa
+```
+  getMahasiswa() {
+    this.api.tampil('tampil.php').subscribe({
+      next: (res: any) => {
+        console.log('sukses', res);
+        this.dataMahasiswa = res.filter((item: any) => 
+          item && item.nama && item.jurusan && 
+          item.nama.trim() !== '' && item.jurusan.trim() !== ''
+        );
+      },
+      error: (err: any) => {
+        console.log('Error:', err);
+        this.alertController.create({
+          header: 'Error',
+          message: 'Gagal mengambil data: ' + err.message,
+          buttons: ['OK']
+        }).then(alert => alert.present());
+      },
+    });
+  }
+
+  async konfirmasiHapus(id: any) {
+    const alert = await this.alertController.create({
+      header: 'Confirmation',
+      message: 'Are you sure want to delete this data?',
+      buttons: [
+        {
+          text: 'No',
+          role: 'cancel',
+          handler: () => {
+            console.log('Hapus dibatalkan');
+          }
+        }, {
+          text: 'Yes',
+          handler: () => {
+            this.hapusMahasiswa(id);
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async tambahMahasiswa() {
+    if (this.namaMahasiswa != '' && this.jurusan != '') {
+      let data = {
+        nama: this.namaMahasiswa,
+        jurusan: this.jurusan,
+      }
+      this.api.tambah(data, 'tambah.php')
+        .subscribe({
+          next: async (hasil: any) => {
+            this.modalTambah = false;
+            this.modal.dismiss();
+            this.resetModal();
+            await new Promise(resolve => {
+              this.getMahasiswa();
+              resolve(true);
+            });
+
+            const alert = await this.alertController.create({
+              header: 'Success',
+              message: `Data mahasiswa ${this.namaMahasiswa} successfully added`,
+              buttons: ['OK']
+            });
+  
+            await alert.present();
+          },
+          error: async (err: any) => {
+            console.log('gagal tambah mahasiswa');
+
+            const alert = await this.alertController.create({
+              header: 'Error',
+              message: 'Gagal menambahkan data mahasiswa',
+              buttons: ['OK']
+            });
+  
+            await alert.present();
+          }
+        })
+    } else {
+      const alert = await this.alertController.create({
+        header: 'Peringatan',
+        message: 'Nama dan jurusan harus diisi',
+        buttons: ['OK']
+      });
+  
+      await alert.present();
+      console.log('gagal tambah mahasiswa karena masih ada data yg kosong');
+    }
+  }
+
+  hapusMahasiswa(id: any) {
+    this.api.hapus(id,
+      'hapus.php?id=').subscribe({
+        next: (res: any) => {
+          console.log('Success', res);
+          this.getMahasiswa();
+          console.log('Data has been deleted');
+        },
+        error: (error: any) => {
+          console.log('gagal');
+        }
+      })
+  }
+
+  ambilMahasiswa(id: any) {
+    this.api.lihat(id,
+      'lihat.php?id=').subscribe({
+        next: (hasil: any) => {
+          console.log('sukses', hasil);
+          let mahasiswa = hasil;
+          this.id = mahasiswa.id;
+          this.namaMahasiswa = mahasiswa.nama;
+          this.jurusan = mahasiswa.jurusan;
+        },
+        error: (error: any) => {
+          console.log('gagal ambil data');
+        }
+      })
+  }
+
+  async editMahasiswa() {
+    if (this.namaMahasiswa != '' && this.jurusan != '') {
+      let data = {
+        id: this.id,
+        nama: this.namaMahasiswa,
+        jurusan: this.jurusan
+      }
+      this.api.edit(data, 'edit.php')
+        .subscribe({
+          next: async (hasil: any) => {
+            console.log(hasil);
+            this.resetModal();
+            this.getMahasiswa();
+            console.log('berhasil edit Mahasiswa');
+            this.modalEdit = false;
+            this.modal.dismiss();
+
+            const alert = await this.alertController.create({
+              header: 'Success',
+              message: `Data ${this.namaMahasiswa} successfully updated`,
+              buttons: ['OK']
+            });
+  
+            await alert.present();
+          },
+          error: async (err: any) => {
+            console.log('gagal edit Mahasiswa');
+            
+            const alert = await this.alertController.create({
+              header: 'Error',
+              message: 'Gagal mengubah data mahasiswa',
+              buttons: ['OK']
+            });
+  
+            await alert.present();
+          }
+        })
+    } else {
+      const alert = await this.alertController.create({
+        header: 'Peringatan',
+        message: 'Nama dan jurusan harus diisi',
+        buttons: ['OK']
+      });
+  
+      await alert.present();
+      console.log('gagal edit mahasiswa karena masih ada data yg kosong');
+    }
+  }
+
+  logout() {
+    this.authService.logout();
+    this.router.navigateByUrl('/login');
+  }
+}
+```
+Di atas ini adalah fungsi-fungsi pada file mahasiswa/mahasiswa.page.ts. Terdapat `getMahasiswa()` yang mengambil data mahasiswa dari API (`tampil.php`) dan menyimpannya ke dalam `dataMahasiswa` setelah memfilter data kosong. Kemudian ada `konfirmasiHapus(id)`, yang menampilkan konfirmasi untuk menghapus data mahasiswa dengan ID tertentu. Jika dikonfirmasi, fungsi `hapusMahasiswa(id)` akan dipanggil untuk menghapus data mahasiswa dari API (`hapus.php?id=`) dan memuat ulang data mahasiswa. lalu, `tambahMahasiswa()` digunakan untuk menambah data mahasiswa baru ke API (`tambah.php`). Jika berhasil, notifikasi sukses ditampilkan, jika gagal, akan muncul pesan error. Fungsi `ambilMahasiswa(id)` mengambil data mahasiswa berdasarkan ID dari API (`lihat.php?id=`) dan menyimpannya untuk diedit. Fungsi `editMahasiswa()` mengirim data yang telah diedit ke API (`edit.php`) untuk memperbarui data mahasiswa, dengan notifikasi sukses atau error sesuai hasilnya.
 
 
 6. Fungsi untuk login
+```
+login() {
+    if (this.username != null && this.password != null) {
+      const data = {
+        username: this.username,
+        password: this.password
+      }
+      this.authService.postMethod(data, 'login.php').subscribe({
+        next: (res) => {
+          if (res.status_login == "berhasil") {
+            this.authService.saveData(res.token, res.username);
+            this.username = '';
+            this.password = '';
+            this.router.navigateByUrl('/mahasiswa');
+          } else {
+            this.authService.notifikasi('Username atau Password Salah');
+          }
+        },
+        error: (e) => {
+          this.authService.notifikasi('Login Gagal Periksa Koneksi Internet Anda');
+        }
+      })
+    } else {
+      this.authService.notifikasi('Username atau Password Tidak Boleh Kosong');
+    }
+  }
+```
+Di atas ini adalah fungsi login(). Fungsinya untuk memeriksa apakah username dan password diisi. Jika diisi, data dikirim ke API. Jika berhasil, token dan username disimpan, lalu pengguna diarahkan ke halaman mahasiswa. Jika login gagal, notifikasi "Username atau Password Salah" ditampilkan. Jika ada kesalahan jaringan, notifikasi "Login Gagal Periksa Koneksi Internet Anda" akan muncul.
+
+
 7. Tampilan halaman
 - Halaman Login
+```
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Login</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Login</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-item lines="full">
+    <ion-label position="floating">Username</ion-label>
+    <ion-input type="text" [(ngModel)]="username" required="required"></ion-input>
+  </ion-item>
+  <ion-item lines="full">
+    <ion-label position="floating">Password</ion-label>
+    <ion-input type="password" [(ngModel)]="password" required="required"></ion-input>
+  </ion-item>
+  <ion-row>
+    <ion-col>
+      <ion-button type="submit" color="primary" expand="block" (click)="login()">Login</ion-button>
+    </ion-col>
+  </ion-row>
+</ion-content>
+```
+diatas adalah tampilan halaman login yang menampilkan 2 field form untuk user mengisikan username dan password. lalu terdapat satu tombol login untuk masuk ke halaman mahasiswa.
+
 - Halaman Mahasiswa
+```
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Welcome {{ namaUser }}, This is the Mahasiswa Data Page</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Data Mahasiswa</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <hr>
+  
+
+  <!-- button tambah -->
+  <ion-card>
+    <ion-button (click)="openModalTambah(true)" expand="block">Add Data Mahasiswa</ion-button>
+  </ion-card>
+  <!-- modal tambah -->
+  <ion-modal [isOpen]="modalTambah" (ionModalDidDismiss)="cancel()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button (click)="cancel()"><ion-icon name="close-outline"></ion-icon></ion-button>
+          </ion-buttons>
+          <ion-title>Add Data Mahasiswa</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-input label="Nama Mahasiswa" labelPlacement="floating" required [(ngModel)]="namaMahasiswa"
+            placeholder="Masukkan Nama Mahasiswa" type="text">
+          </ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-input label='Jurusan Mahasiswa' labelPlacement="floating" required [(ngModel)]="jurusan"
+            placeholder="Masukkan Jurusan Mahasiswa" type="text">
+          </ion-input>
+        </ion-item>
+        <ion-row>
+          <ion-col>
+            <ion-button type="button" (click)="tambahMahasiswa()" color="primary" shape="full" expand="block">Add
+              Mahasiswa
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+  <!-- ini untuk modal edit -->
+  <ion-modal [isOpen]="modalEdit" (ionModalDidDismiss)="cancel()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button (click)="cancel()"><ion-icon name="close-outline"></ion-icon></ion-button>
+          </ion-buttons>
+          <ion-title>Edit Data Mahasiswa</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-input label="Nama Mahasiswa" labelPlacement="floating" required [(ngModel)]="namaMahasiswa"
+            placeholder="Masukkan Nama Mahasiswa" type="text">
+          </ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-input label='Jurusan Mahasiswa' labelPlacement="floating" required [(ngModel)]="jurusan"
+            placeholder="Masukkan Jurusan Mahasiswa" type="text">
+          </ion-input>
+        </ion-item>
+        <ion-input required [(ngModel)]="id" type="hidden">
+        </ion-input>
+        <ion-row>
+          <ion-col>
+            <ion-button type="button" (click)="editMahasiswa()" color="primary" shape="full" expand="block">Edit
+              Data Mahasiswa
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <ion-card *ngFor="let item of dataMahasiswa">
+    <ion-item *ngIf="item && item.nama && item.jurusan">
+      <ion-label>
+        {{item.nama}}
+        <p>{{item.jurusan}}</p>
+      </ion-label>
+      <ion-button color="warning" expand="block" (click)="openModalEdit(true,item.id)">
+        Edit
+      </ion-button>
+      <ion-button color="danger" slot="end" (click)="konfirmasiHapus(item.id)">
+        Delete
+      </ion-button>  
+    </ion-item>
+  </ion-card>
+
+  <ion-item (click)="logout()" style="margin-top: 30px;">
+    <ion-icon slot="start" ios="exit-outline" md="exit-sharp"></ion-icon>
+    <ion-label>Logout</ion-label>
+  </ion-item>
+</ion-content>
+```
+diatas adalah file tampilan untuk mahasiswa, pertama-tama terdapat tulisan header yang mengambil nama user. lalu terdapat button untuk create data mahasiswa. selanjutnya ada card yang akan menyesuaikan jumlah data dari database, pada tiap card dibagian kanan ada dua button untuk edit dan juga untuk delete. lalu dipaling bawah terdapat tombol untuk logout yang jika dipencet akan mengarahkan kemabali ke halaman login.
+
+
 8. Guards
 - auth.guard.ts
 - auto-login.guard.ts
